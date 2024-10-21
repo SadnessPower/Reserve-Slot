@@ -4,7 +4,7 @@
 
 -----------------------------------------------------------------------------------------------------------------------
 ## LATEST CHANGELOG
-2024-10-03 Fixes (1.0) by SadnessPower
+2024-10-03 Fixes (1.0) by *SadnessPower*
 - Fixed Reserve Slot stacks disappering on Battle Replay 
 - Removed Split button
 - Enter key could now be pressed to confirm the dialog
@@ -12,7 +12,9 @@
 -----------------------------------------------------------------------------------------------------------------------
 CREDITS
 -----------------------------------------------------------------------------------------------------------------------
-Originally by Yuji Sakai, Extended by Trebuchet, Bug Fixing by SadnessPower
+Originally by *Yuji Sakai*  
+Extended by *Trebuchet*  
+Bug Fixing by *SadnessPower*  
 
 -----------------------------------------------------------------------------------------------------------------------
 FEEDBACK
