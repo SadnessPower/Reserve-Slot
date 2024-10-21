@@ -1,9 +1,10 @@
 # HERO RESERVE SLOTS 1.0
 
-This mod gives your hero 7 extra slots to store additional creatures.
+### *This mod gives your hero 7 extra slots to store additional creatures.*
 
+-----------------------------------------------------------------------------------------------------------------------
 ## LATEST CHANGELOG
-2024-10-03 Fixes (by SadnessPower)
+2024-10-03 Fixes (1.0) by SadnessPower
 - Fixed Reserve Slot stacks disappering on Battle Replay 
 - Removed Split button
 - Enter key could now be pressed to confirm the dialog
