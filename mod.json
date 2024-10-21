@@ -6,8 +6,8 @@
 	},
 	"description": {
 		"full": {
-			"en_US": "readme.txt",
-			"ru_RU": "readme_ru.txt",
+			"en_US": "readme.md",
+			"ru_RU": "readme.md",
 			"ua_UA": ""
 		},
 		"short": {
@@ -19,10 +19,10 @@
 	"author": "Originally by Yuji Sakai, Extended by Trebuchet, Bug Fixing by SadnessPower",
 	"homepage": "",
 	"icon": {
-		"file": "",
+		"file": "Hero Reserve Slots.ico",
 		"index": 0
 	},
-	"mod_version": "v3.1",
+	"mod_version": "v1.0",
 	"priority": 0,
 	"compatibility": {
 		"class": "default",
