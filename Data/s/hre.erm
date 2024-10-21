@@ -1,0 +1,1602 @@
+ZVSE2
+
+; ============= VARIABLES ==========================================================================
+
+; treb_hre_heroActive                               =  0-155
+; treb_hre_hero%i_heroId                            =  i = 0-155
+; treb_hre_hero%i_heroOwner                         =  i = 0-155
+; treb_hre_slot%i_heroIdStored                      =  i = 0-155
+; treb_hre_slot%i_heroOwnerStored                   =  i = 0-155
+
+; treb_hre_row                                      =  0-2
+; treb_hre_column                                   =  0-6
+
+; treb_hre_hero%(hero)_slot%i_monHeroType           =  y20  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroQty            =  y21  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroExp            =  y22  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroBannerOwn      =  y23  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroBannerNum      =  y24  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroBannerOpt      =  y25  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroBannerType     =  y26  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monHeroRank           =  y27  i = 0-6
+
+; treb_hre_hero%(hero)_slot%i_monReserveType        =  y30  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveQty         =  y31  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveExp         =  y32  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveBannerOwn   =  y33  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveBannerNum   =  y34  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveBannerOpt   =  y35  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveBannerType  =  y36  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveRank        =  y37  i = 0-6
+; treb_hre_hero%(hero)_slot%i_monReserveLock        =  y38  i = 0-6
+
+; treb_hre_hero%(hero)_hasRetreated                 =  0-1
+; treb_hre_hero%(hero)_hasSurrendered               =  0-1
+; treb_hre_hero%(hero)_hasReserveArmy               =  0-1
+; treb_hre_hero%(hero)_hasMana                      =  0-1
+; treb_hre_hero%(hero)_hasSummonedAll               =  0-1
+; treb_hre_hero%(hero)_canSummon                    =  0-1
+
+; treb_hre_hero%(hero)_slot%i_monReserveSummon      =  i = 0-6 (NOT USED)
+; treb_hre_hero%(hero)_pos%i_scan                   =  i = 0-186 (NOT USED)
+; treb_hre_summonOptShow                            =  0-1 (NOT USED)
+; treb_hre_summonOpt                                =  0-1 (NOT USED)
+
+; ============= INITIALIZATION =====================================================================
+
+!?FU(OnEveryDay)&i^timerDay^=1;
+!!re i/(HERO_FIRST)/(HERO_LAST_WOG);
+  !!SN:W^treb_hre_hero%i_heroId^/(NO_HERO);
+  !!SN:W^treb_hre_hero%i_heroOwner^/(NO_PLAYER);
+  !!SN:W^treb_hre_hero%i_heroIdStored^/(NO_HERO);
+  !!SN:W^treb_hre_hero%i_heroOwnerStored^/(NO_PLAYER);
+!!en;
+
+!?FU(OnEveryDay);
+!!OW:C?(player:y);
+!!OW:I(player)/?(isAi:y);
+
+!!if&(isAi)=0;
+  !!re i/(HERO_FIRST)/(HERO_LAST_WOG);
+    !!HEi:N?(hero:y) O?(owner:y);
+    !!SN:W^treb_hre_hero%i_heroId^/(hero);
+    !!SN:W^treb_hre_hero%i_heroOwner^/(owner);
+    !!SN:W^treb_hre_hero%i_heroIdStored^/(hero);
+    !!SN:W^treb_hre_hero%i_heroOwnerStored^/(owner);
+    !!FU(treb_hre_heroInit):P(hero);
+  !!en;
+
+!!el&(isAi)=1;
+  !!re i/(HERO_FIRST)/(HERO_LAST_WOG);
+    !!HEi:N?(heroAi:y) O?(ownerAi:y);
+    !!SN:W^treb_hre_hero%i_heroId^/(heroAi);
+    !!SN:W^treb_hre_hero%i_heroOwner^/(ownerAi);
+    !!SN:W^treb_hre_hero%i_heroIdStored^/(heroAi);
+    !!SN:W^treb_hre_hero%i_heroOwnerStored^/(ownerAi);
+    !!FU(treb_hre_heroInit):P(heroAi);
+  !!en;
+!!en;
+
+!?FU(treb_hre_heroScan);
+!!re i/(HERO_FIRST)/(HERO_LAST_WOG);
+  !!SN:W^treb_hre_hero%i_heroId^/?(hero:y);
+  !!SN:W^treb_hre_hero%i_heroOwner^/?(player:y);
+  !!SN:W^treb_hre_hero%i_heroIdStored^/?(heroStored:y);
+  !!SN:W^treb_hre_hero%i_heroOwnerStored^/?(playerStored:y);
+
+  !!if&(hero)>=(HERO_FIRST)/(hero)<=(HERO_LAST_WOG)/
+  (heroStored)>=(HERO_FIRST)/(heroStored)<=(HERO_LAST_WOG)/
+  (player)>=(PLAYER_FIRST)/(player)<=(PLAYER_LAST)/
+  (playerStored)>=(PLAYER_FIRST)/(playerStored)<=(PLAYER_LAST);
+
+    *!IF:M^%(hero) %(player) %(heroStored) %(playerStored)^;  [Debug]
+
+    !!if&(player)<>(playerStored)/(hero)=(heroStored);
+      !!FU(treb_hre_heroReset):P(heroStored);
+    !!el;
+      !!FU(treb_hre_heroInit):P(hero);
+    !!en;
+  !!en;
+!!en;
+
+!?FU(treb_hre_heroReset);
+!!re i/0/6;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveType^/(NO_MON);
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveQty^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveExp^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerOwn^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerNum^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerOpt^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerType^/0;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveRank^/0;
+!!en;
+
+!!FU(treb_hre_heroInit):Px1;
+
+!?FU(treb_hre_heroInit);
+!!re i/0/6;
+  !!HEx1:C0/i/?y20/?y21;
+  !!EXx1/i:E?y22;
+  !!EXx1/i:R?y23/?y26/?y25/?y24;
+
+  !!if&y20>(NO_MON)/y21>0;
+    !!SN:E7503648/1/y20/y22;  
+    !!VRy27:Sv1;
+  !!en;
+
+  !!HEx1:E?y39/?y40;
+
+  !!VRy38&i=0/y40=1:S0;
+  !!VRy38&i<=1/y40=5:S0;
+  !!VRy38&i<=2/y40=10:S0;
+  !!VRy38&i<=3/y40=15:S0;
+  !!VRy38&i<=4/y40=25:S0;
+  !!VRy38&i<=5/y40=40:S0;
+  !!VRy38&i<=6/y40=50:S0;
+
+  !!VRy38&i=0/y40<1:S1;
+  !!VRy38&i>=1/y40<5:S1;
+  !!VRy38&i>=2/y40<10:S1;
+  !!VRy38&i>=3/y40<15:S1;
+  !!VRy38&i>=4/y40<25:S1;
+  !!VRy38&i>=5/y40<40:S1;
+  !!VRy38&i>=6/y40<50:S1;
+
+  !!VRy24&y23=1:+1;
+  
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroType^/y20;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroQty^/y21;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroExp^/y22;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerOwn^/y23;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerNum^/y24;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerOpt^/y25;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerType^/y26;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroRank^/y27;
+
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveLock^/y38;
+
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveType^/?y30;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveQty^/?y31;
+
+  !!if&y31<=0;
+    !!SN:W^treb_hre_hero%x1_slot%i_monReserveType^/(NO_MON);
+  !!en;
+
+  *!IF:M^%y20 %y21 %y22 %y23 %y24 %y25 %y26 %y27^;  [Debug]
+
+!!en;
+
+!!SN:W^treb_hre_hero%x1_slot0_monReserveQty^/?y40;
+!!SN:W^treb_hre_hero%x1_slot1_monReserveQty^/?y41;
+!!SN:W^treb_hre_hero%x1_slot2_monReserveQty^/?y42;
+!!SN:W^treb_hre_hero%x1_slot3_monReserveQty^/?y43;
+!!SN:W^treb_hre_hero%x1_slot4_monReserveQty^/?y44;
+!!SN:W^treb_hre_hero%x1_slot5_monReserveQty^/?y45;
+!!SN:W^treb_hre_hero%x1_slot6_monReserveQty^/?y46;
+
+!!VRy50:Sy40+y41+y42+y43+y44+y45+y46;
+
+!!SN&y50>0:W^treb_hre_hero%x1_hasReserveArmy^/1;
+!!SN&y50<=0:W^treb_hre_hero%x1_hasReserveArmy^/0;
+
+; ============= PRIMARY FUNCTION ===================================================================
+
+!?CM2;
+!!SN:L^Era.dll^/?y1 Ay1/^GetButtonID^/?y2 Ey2/0/^Knightmare.Reserve^;
+
+!!CM:S?y1 I?y2;
+!!FU|y1<>13/y2<>v1:E;
+
+!!HE-1:N?y3 O?(owner:y) B0/?z4;
+
+!!FU(WOG_GameMgr_GetPlayer_Me):P?(meId:y);
+!!FU&(owner)<>(meId):E;
+
+!!DL22:N^hre_dlg.txt^;
+
+!!FU(treb_hre_getHeroPortrait):Py3/1/9;
+!!DL22:A999/11/z9;
+
+!!SN:Kz4/?y4;
+!!VRy4:-1;
+!!SN:Kz4/y4/?z5;
+!!if&z5=^s^;
+  !!VRz6:S^%z4'^;
+!!el&z5<>^s^;
+  !!VRz6:S^%z4's^;
+!!en;
+
+!!VRz7:S^{%z6 Troop Reserve}^;
+!!DL22:A98/3/^%z7^;
+
+!!re j/(PLAYER_FIRST)/(PLAYER_LAST);
+  !!DL22&j=(owner):A998/4/j;
+!!en;
+
+!!re i/0/6;
+  !!HEy3:C0/i/?y20/?y21;
+  !!EXy3/i:E?y22;
+  !!EXy3/i:R?y23/?y26/?y25/?y24;
+
+  !!if&y20>(NO_MON)/y21>0;
+    !!SN:E7503648/1/y20/y22;  
+    !!VRy27:Sv1;
+  !!en;
+
+  !!HEy3:E?y39/?y40;
+
+  !!VRy38&i=0/y40=1:S0;
+  !!VRy38&i<=1/y40=5:S0;
+  !!VRy38&i<=2/y40=10:S0;
+  !!VRy38&i<=3/y40=15:S0;
+  !!VRy38&i<=4/y40=25:S0;
+  !!VRy38&i<=5/y40=40:S0;
+  !!VRy38&i<=6/y40=50:S0;
+
+  !!VRy38&i=0/y40<1:S1;
+  !!VRy38&i>=1/y40<5:S1;
+  !!VRy38&i>=2/y40<10:S1;
+  !!VRy38&i>=3/y40<15:S1;
+  !!VRy38&i>=4/y40<25:S1;
+  !!VRy38&i>=5/y40<40:S1;
+  !!VRy38&i>=6/y40<50:S1;
+
+  !!VRy24&y23=1:+1;
+  
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroType^/y20;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroQty^/y21;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroExp^/y22;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerOwn^/y23;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerNum^/y24;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerOpt^/y25;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerType^/y26;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroRank^/y27;
+
+  !!SN:W^treb_hre_hero%y3_slot%i_monReserveLock^/y38;
+
+  !!SN:W^treb_hre_hero%y3_slot%i_monReserveType^/?y30;
+  !!SN:W^treb_hre_hero%y3_slot%i_monReserveQty^/?y31;
+
+  !!if&y31<=0;
+    !!SN:W^treb_hre_hero%y3_slot%i_monReserveType^/(NO_MON);
+  !!en;
+
+  *!IF:M^%y20 %y21 %y22 %y23 %y24 %y25 %y26 %y27^;  [Debug]
+
+!!en;
+
+!!FU(treb_hre_mainDlgPrep):Py3;
+!!DL22:S;
+
+!!re i/0/6;
+
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroType^/?y20;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroQty^/?y21;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroExp^/?y22;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerOwn^/?y23;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerNum^/?y24;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerOpt^/?y25;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroBannerType^/?y26;
+  !!SN:W^treb_hre_hero%y3_slot%i_monHeroRank^/?y27;
+
+  !!VRy24&y23=1:-1;
+
+  !!HEy3:C0/i/y20/y21;
+  !!EXy3/i:Ey22;
+  !!EXy3/i:Ry23/y26/y25/y24;
+
+!!en;
+
+!!SN:W^treb_hre_hero%y3_slot0_monReserveQty^/?y40;
+!!SN:W^treb_hre_hero%y3_slot1_monReserveQty^/?y41;
+!!SN:W^treb_hre_hero%y3_slot2_monReserveQty^/?y42;
+!!SN:W^treb_hre_hero%y3_slot3_monReserveQty^/?y43;
+!!SN:W^treb_hre_hero%y3_slot4_monReserveQty^/?y44;
+!!SN:W^treb_hre_hero%y3_slot5_monReserveQty^/?y45;
+!!SN:W^treb_hre_hero%y3_slot6_monReserveQty^/?y46;
+
+!!VRy50:Sy40+y41+y42+y43+y44+y45+y46;
+
+!!SN&y50>0:W^treb_hre_hero%y3_hasReserveArmy^/1;
+!!SN&y50<=0:W^treb_hre_hero%y3_hasReserveArmy^/0;
+
+!!UN:R3/-1;
+
+; ==================================================================================================
+
+!?FU(treb_hre_getHeroPortrait);
+!!VRzx3:S^^;
+!!FU|x1<0/x1>155:E;
+!!UN:C6806760/4/?y1;
+!!VRx2:*4 +48 +y1;
+!!VRx3:*512+9597416;
+!!SN:E7411341/1/x1;
+!!VRy1:Sv1 +52;
+!!UN:Cy1/1/?y1;
+!!VRy1&y1<0:+256;
+!!VRy1:*92 +x2;
+!!UN:Cy1/4/?y1;
+!!re y3/1/512;
+  !!UN:Cy1/1/?y2 Cx3/1/y2;
+  !!br&y2=0;
+  !!VRy1:+1;
+  !!VRx3:+1;
+!!en;
+
+; ==================================================================================================
+
+!?FU(treb_hre_mainDlgPrep);
+!!SN:W^treb_hre_heroActive^/x1;
+
+!!HEx1:O?(owner:y);
+
+!!SN:W^treb_hre_hero%x1_heroOwner^/(owner);
+!!SN:W^treb_hre_hero%x1_heroId^/x1;
+
+!!SN:W^treb_hre_hero%x1_heroOwnerStored^/?(player:y);
+!!SN:W^treb_hre_hero%x1_heroIdStored^/?(hero:y);
+
+!!if&x1=(hero)/(player)=(NO_PLAYER);
+!!SN:W^treb_hre_hero%x1_heroOwnerStored^/(owner);
+!!SN:W^treb_hre_hero%x1_heroIdStored^/x1;
+!!en;
+
+!!FU(treb_hre_heroScan):P;
+
+!!SN:W^treb_hre_row^/0;
+!!SN:W^treb_hre_column^/0;
+
+!!re i/0/6;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroType^/?y20;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroQty^/?y21;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroExp^/?y22;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerOwn^/?y23;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerNum^/?y24;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerOpt^/?y25;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroBannerType^/?y26;
+  !!SN:W^treb_hre_hero%x1_slot%i_monHeroRank^/?y27;
+
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveType^/?y30;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveQty^/?y31;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveExp^/?y32;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerOwn^/?y33;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerNum^/?y34;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerOpt^/?y35;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveBannerType^/?y36;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveRank^/?y37;
+  !!SN:W^treb_hre_hero%x1_slot%i_monReserveLock^/?y38;
+
+  !!VRy40:S8+i;     [Portrait Hero]
+  !!VRy41:S22+i;    [Count Hero]
+  !!VRy42:S1+i;     [Portrait Reserve]
+  !!VRy43:S15+i;    [Count Reserve]
+
+  !!VRy44&y20>(NO_MON):Sy20+2;
+  !!VRy45&y30>(NO_MON):Sy30+2;
+
+  !!VRz1:S^%y21^;
+  !!VRz2:S^%y31^;
+
+  !!DL22&y20>(NO_MON)/y21>0:Ay40/4/y44 Ay41/3/z1;
+  !!DL22&y30>(NO_MON)/y31>0:Ay42/4/y45 Ay43/3/z2;
+
+  !!VRy46:S50+i;
+  !!VRy47:S43+i;
+
+  !!VRy48&y24=0/y27=0:S0;
+  !!VRy49&y34=0/y37=0:S0;
+
+  !!VRy48&y24>0/y27=0:Sy24;
+  !!VRy49&y34>0/y37=0:Sy34;
+
+  !!VRy48&y24=0/y27>0:Sy27+4;
+  !!VRy49&y34=0/y37>0:Sy37+4;
+
+  !!VRy48&y24=1/y27>0:Sy27+14;
+  !!VRy49&y34=1/y37>0:Sy37+14;
+
+  !!VRy48&y24=2/y27>0:Sy27+24;
+  !!VRy49&y34=2/y37>0:Sy37+24;
+
+  !!VRy48&y24=3/y27>0:Sy27+34;
+  !!VRy49&y34=3/y37>0:Sy37+34;
+
+  !!VRy48&y24=4/y27>0:Sy27+44;
+  !!VRy49&y34=4/y37>0:Sy37+44;
+
+  !!DL22&y20>(NO_MON)/y21>0:Ay46/4/y48; 
+  !!DL22&y30>(NO_MON)/y31>0:Ay47/4/y49;
+
+  !!HEx1:B0/?z50 B2/?y50;
+  !!VRz51&y50=0:S^Knight^;
+  !!VRz51&y50=1:S^Cleric^;
+  !!VRz51&y50=2:S^Ranger^;
+  !!VRz51&y50=3:S^Druid^;
+  !!VRz51&y50=4:S^Alchemist^;
+  !!VRz51&y50=5:S^Wizard^;
+  !!VRz51&y50=6:S^Demoniac^;
+  !!VRz51&y50=7:S^Heretic^;
+  !!VRz51&y50=8:S^Death Knight^;
+  !!VRz51&y50=9:S^Necromancer^;
+  !!VRz51&y50=10:S^Warlock^;
+  !!VRz51&y50=11:S^Overlord^;
+  !!VRz51&y50=12:S^Barbarian^;
+  !!VRz51&y50=13:S^Battle Mage^;
+  !!VRz51&y50=14:S^Beastmaster^;
+  !!VRz51&y50=15:S^Witch^;
+  !!VRz51&y50=16:S^Planeswalker^;
+  !!VRz51&y50=17:S^Elementalist^;
+  !!VRz52:S^%z50 the %z51^;
+
+  !!VRy51:S36+i;
+  !!VRy52:S29+i;
+
+  !!VR(monReserve:y):S20+i;
+  !!VR(monHero:y):S10+i;
+  !!VR(monReserveMsg:y):S40+i;
+  !!VR(monHeroMsg:y):S30+i;
+
+  !!UN&y21>1/y20>(NO_MON):N3/z(monHero)/y20/1;
+  !!UN&y21=1/y20>(NO_MON):N3/z(monHero)/y20/0;
+
+  !!UN&y31>1/y30>(NO_MON):N3/z(monReserve)/y30/1;
+  !!UN&y31=1/y30>(NO_MON):N3/z(monReserve)/y30/0;
+
+  !!VRz(monHeroMsg):S^Select %z(monHero) (hero's army)^;
+  !!VRz(monReserveMsg):S^Select %z(monReserve) (reserve's army)^;
+
+  !!VRz5:S^Close Reserve Screen^;
+  !!VRz6:S^Empty^;
+  !!VRz7:S^Locked^;
+  !!VRz8:S^Split army^;
+
+  !!DL22:H30721/z5 H100/z8; 
+  !!DL22:H999/z52;
+
+  !!DL22&y20>(NO_MON)/y21>0:Hy51/z(monHeroMsg);
+  !!DL22&y30>(NO_MON)/y31>0:Hy52/z(monReserveMsg);
+  
+  !!DL22&y20<=(NO_MON)/y21<=0:Hy51/z6;
+  !!DL22&y30<=(NO_MON)/y31<=0:Hy52/z6;
+  
+  !!DL22&y38=1:Hy52/z7;
+  !!DL22&y38=1:Ay52/4/2;
+
+  !!HEx1:E?y90/?y91;
+
+  !!VRy92&y91<1:S1;
+  !!VRy92&y91>=1/y91<5:S5;
+  !!VRy92&y91>=5/y91<10:S10;
+  !!VRy92&y91>=10/y91<15:S15;
+  !!VRy92&y91>=15/y91<25:S25;
+  !!VRy92&y91>=25/y91<40:S40;
+  !!VRy92&y91>=40/y91<50:S50;
+
+  !!DL22&y91<50:A97/3/^Next slot will be unlocked at level {~red}%y92{~}.^;
+  !!DL22&y91>=50:A97/3/^^;
+
+!!en;
+
+!!FU(treb_hre_mainDlgClean):P;
+
+; ==================================================================================================
+
+!?FU(treb_hre_mainDlgClean);
+!!SN:W^treb_hre_heroActive^/?y3;
+
+!!SN:W^treb_hre_row^/0;
+!!SN:W^treb_hre_column^/0;
+
+!!SN:W^treb_hre_hero%y3_didSplit^/0;
+!!SN:W^treb_hre_hero%y3_monHeroTypeSelect^/(NO_MON);
+!!SN:W^treb_hre_hero%y3_monHeroQtySelect^/0;
+!!SN:W^treb_hre_hero%y3_monHeroTypeChosen^/(NO_MON);
+!!SN:W^treb_hre_hero%y3_monHeroQtyChosen^/0;
+!!SN:W^treb_hre_hero%y3_monReserveTypeSelect^/(NO_MON);
+!!SN:W^treb_hre_hero%y3_monReserveQtySelect^/0;
+!!SN:W^treb_hre_hero%y3_monReserveTypeChosen^/(NO_MON);
+!!SN:W^treb_hre_hero%y3_monReserveQtyChosen^/0;
+
+!!re i/0/6; 
+  !!SN:W^treb_hre_hero%y3_slot%i_monReserveLock^/?y38;
+
+  !!VRy40:S36+i;      [Frame Hero]
+  !!VRy41:S29+i;      [Frame Reserve]
+
+  !!DL22:Ay40/4/0;
+  !!DL22&y38=1:Ay41/4/2;
+  !!DL22&y38=0:Ay41/4/0;
+!!en;
+
+; ==================================================================================================
+
+!?FU(treb_hre_mainDlgHint);
+!!SN:W^treb_hre_heroActive^/?y3;
+
+!!SN:W^treb_hre_hero%y3_slot%x16_monHeroType^/?y20;
+!!SN:W^treb_hre_hero%y3_slot%x16_monHeroQty^/?y21;
+
+!!SN:W^treb_hre_hero%y3_slot%x16_monReserveType^/?y30;
+!!SN:W^treb_hre_hero%y3_slot%x16_monReserveQty^/?y31;
+!!SN:W^treb_hre_hero%y3_slot%x16_monReserveLock^/?y38;
+
+!!VRy51:S36+x16;
+!!VRy52:S29+x16;
+
+!!VR(monReserve:y):S20+x16;
+!!VR(monHero:y):S10+x16;
+!!VR(monReserveMsg:y):S40+x16;
+!!VR(monHeroMsg:y):S30+x16;
+
+!!UN&y21>1/y20>(NO_MON):N3/z(monHero)/y20/1;
+!!UN&y21=1/y20>(NO_MON):N3/z(monHero)/y20/0;
+
+!!UN&y31>1/y30>(NO_MON):N3/z(monReserve)/y30/1;
+!!UN&y31=1/y30>(NO_MON):N3/z(monReserve)/y30/0;
+
+!!VRz(monReserveMsg):S^Select %z(monReserve) (reserve's army)^;
+!!VRz(monHeroMsg):S^Select %z(monHero) (hero's army)^;
+
+!!VRz6:S^Empty^;
+!!VRz7:S^Locked^;
+
+!!DL22&y20>(NO_MON):Hy51/z(monHeroMsg);
+!!DL22&y30>(NO_MON):Hy52/z(monReserveMsg);
+
+!!DL22&y20<=(NO_MON):Hy51/z6;
+!!DL22&y30<=(NO_MON):Hy52/z6;
+
+!!DL22&y38=1:Hy52/z7;
+
+; ==================================================================================================
+
+!?DL&v998=22/v999=30721/v1000=13;
+!!SN:W^treb_hre_row^/0;
+!!SN:W^treb_hre_column^/0;
+
+!!FU(treb_hre_mainDlgClean):P;
+!!DL:C1;
+
+; ==================================================================================================
+
+!?DL&v998=22/v999>=29/v999<=42/v1000=12;
+!!SN:W^treb_hre_heroActive^/?y3;
+
+!!SN:W^treb_hre_row^/?y8;
+!!SN:W^treb_hre_column^/?y9;
+
+!!if&v999>=36;                                             [Hero]
+  !!if&y8=0;
+    !!SN:W^treb_hre_row^/1;
+    !!VRy9:Sv999 -36;
+    !!SN:W^treb_hre_column^/y9;
+
+    !!SN:W^treb_hre_hero%y3_slot%y9_monHeroType^/?y20;
+    !!SN:W^treb_hre_hero%y3_slot%y9_monHeroQty^/?y21;
+
+    !!SN:W^treb_hre_hero%y3_monHeroTypeSelect^/y20;
+    !!SN:W^treb_hre_hero%y3_monHeroQtySelect^/y21;
+
+    !!DL22&y20>(NO_MON)/y21>0:Av999/4/1;
+    !!FU(treb_hre_mainDlgClean)&y20<=(NO_MON)/y21<=0:P;
+
+  !!el&y8=1;                                             [Hero to Hero]
+    !!VRy4:Sy9;
+    !!VRy5:Sv999 -36;
+
+    !!VRy60:Sy4+8;
+    !!VRy61:Sy4+22;
+
+    !!VRy62:Sy5+8;
+    !!VRy63:Sy5+22;
+
+    !!VRy64:Sy4+50;
+    !!VRy65:Sy5+50;
+
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/?y20;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/?y21;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/?y22;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/?y23;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/?y24;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/?y25;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/?y26;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/?y27;
+
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/?y40;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/?y41;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/?y42;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/?y43;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/?y44;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/?y45;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/?y46;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/?y47;
+
+    !!if&y4<>y5;
+      !!if&y40<=(NO_MON)/y41<=0;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y21;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y22;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y24;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y27;
+
+        !!VRz1:S^%y21^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+        !!VRy68&y24=0/y27=0:S0;
+        !!VRy68&y24>0/y27=0:Sy24;
+        !!VRy68&y24=0/y27>0:Sy27+4;
+        !!VRy68&y24=1/y27>0:Sy27+14;
+        !!VRy68&y24=2/y27>0:Sy27+24;
+        !!VRy68&y24=3/y27>0:Sy27+34;
+        !!VRy68&y24=4/y27>0:Sy27+44;
+
+        !!DL22:Ay65/4/y68; 
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/(NO_MON);
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/0;
+
+        !!VRz2:S^^;
+        !!DL22:Ay60/4/0 Ay61/3/z2/0;
+        !!DL22:Ay64/4/0;
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!el&y40=y20/y41>0/y20>0;
+        !!VRy70:Sy21+y41;
+        !!VRy72:Sy41*y42;
+        !!VRy73:Sy21*y22;
+        !!VRy73:+y72;
+        !!VRy72:Sy70;
+        !!VRy73&y72>0::y72;
+        !!VRy71:Sy24+y44;
+        !!VRy71&y71>4:S4;
+
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y70;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y73;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y71;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y27;
+
+        !!VRy68&y71=0/y27=0:S0;
+        !!VRy68&y71>0/y27=0:Sy71;
+        !!VRy68&y71=0/y27>0:Sy27+4;
+        !!VRy68&y71=1/y27>0:Sy27+14;
+        !!VRy68&y71=2/y27>0:Sy27+24;
+        !!VRy68&y71=3/y27>0:Sy27+34;
+        !!VRy68&y71=4/y27>0:Sy27+44;
+
+        !!DL22:Ay65/4/y68; 
+
+        !!VRz1:S^%y70^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/(NO_MON);
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/0;
+
+        !!VRz2:S^^;
+        !!DL22:Ay60/4/0 Ay61/3/z2/0;
+        !!DL22:Ay64/4/0;
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!el&y40<>y20/y41>0/y20>0;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y21;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y22;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y24;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y27;
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/y40;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/y41;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/y42;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/y43;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/y44;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/y45;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/y46;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/y47;
+
+        !!VRy68&y24=0/y27=0:S0;
+        !!VRy68&y24>0/y27=0:Sy24;
+        !!VRy68&y24=0/y27>0:Sy27+4;
+        !!VRy68&y24=1/y27>0:Sy27+14;
+        !!VRy68&y24=2/y27>0:Sy27+24;
+        !!VRy68&y24=3/y27>0:Sy27+34;
+        !!VRy68&y24=4/y27>0:Sy27+44;
+
+        !!VRy69&y44=0/y47=0:S0;
+        !!VRy69&y44>0/y47=0:Sy44;
+        !!VRy69&y44=0/y47>0:Sy47+4;
+        !!VRy69&y44=1/y47>0:Sy47+14;
+        !!VRy69&y44=2/y47>0:Sy47+24;
+        !!VRy69&y44=3/y47>0:Sy47+34;
+        !!VRy69&y44=4/y47>0:Sy47+44;
+
+        !!DL22:Ay65/4/y68; 
+        !!DL22:Ay64/4/y69; 
+
+        !!VRz1:S^%y21^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+        !!VRz2:S^%y41^;
+        !!VRy67:Sy40+2;
+        !!DL22:Ay62/4/y67/0 Ay63/3/z2/0 Av999/4/0/0;
+
+        !!DL22:Ay62/4/y66 Ay63/3/z1/0;
+        !!DL22:Ay60/4/y67 Ay61/3/z2/0;
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!en;
+    !!en;
+
+  !!el&y8=2;                                             [Garrison to Hero]
+    !!VRy4:Sy9;
+    !!VRy5:Sv999 -36;
+
+    !!VRy60:Sy4+1;
+    !!VRy61:Sy4+15;
+
+    !!VRy62:Sy5+8;
+    !!VRy63:Sy5+22;
+
+    !!VRy64:Sy4+43;
+    !!VRy65:Sy5+50;
+
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/?y30;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/?y31;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/?y32;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/?y33;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/?y34;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/?y35;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/?y36;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/?y37;
+
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/?y40;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/?y41;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/?y42;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/?y43;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/?y44;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/?y45;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/?y46;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/?y47;
+
+    !!if&y40<=(NO_MON)/y41<=0;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y30;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y31;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y32;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y33;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y34;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y35;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y36;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y37;
+
+      !!VRy68&y34=0/y37=0:S0;
+      !!VRy68&y34>0/y37=0:Sy34;
+      !!VRy68&y34=0/y37>0:Sy37+4;
+      !!VRy68&y34=1/y37>0:Sy37+14;
+      !!VRy68&y34=2/y37>0:Sy37+24;
+      !!VRy68&y34=3/y37>0:Sy37+34;
+      !!VRy68&y34=4/y37>0:Sy37+44;
+
+      !!DL22:Ay65/4/y68; 
+
+      !!VRz1:S^%y31^;
+      !!VRy66:Sy30+2;
+      !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/1/0;
+
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/0;
+
+      !!VRz2:S^^;
+      !!DL22:Ay60/4/0 Ay61/3/z2/0; 
+      !!DL22:Ay64/4/0;
+      !!FU(treb_hre_mainDlgClean):P;
+      !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+    !!el&y40=y30/y41>0/y31>0;
+      !!VRy70:Sy31+y41;
+      !!VRy72:Sy41*y42;
+      !!VRy73:Sy31*y32;
+      !!VRy73:+y72;
+      !!VRy72:Sy70;
+      !!VRy73&y72>0::y72;
+      !!VRy71:Sy34+y44;
+      !!VRy71&y71>4:S4;
+
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y30;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y70;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y73;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y33;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y71;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y35;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y36;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y37;
+
+      !!VRy68&y71=0/y37=0:S0;
+      !!VRy68&y71>0/y37=0:Sy71;
+      !!VRy68&y71=0/y37>0:Sy37+4;
+      !!VRy68&y71=1/y37>0:Sy37+14;
+      !!VRy68&y71=2/y37>0:Sy37+24;
+      !!VRy68&y71=3/y37>0:Sy37+34;
+      !!VRy68&y71=4/y37>0:Sy37+44;
+
+      !!DL22:Ay65/4/y68; 
+
+      !!VRz1:S^%y70^;
+      !!VRy66:Sy30+2;
+      !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/1/0;
+
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/0;
+
+      !!VRz2:S^^;
+      !!DL22:Ay60/4/0 Ay61/3/z2/0;
+      !!DL22:Ay64/4/0; 
+      !!FU(treb_hre_mainDlgClean):P;
+      !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+    !!el&y40<>y30/y41>0/y31>0;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroType^/y30;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroQty^/y31;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroExp^/y32;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOwn^/y33;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerNum^/y34;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerOpt^/y35;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroBannerType^/y36;
+      !!SN:W^treb_hre_hero%y3_slot%y5_monHeroRank^/y37;
+
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/y40;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/y41;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/y42;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/y43;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/y44;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/y45;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/y46;
+      !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/y47;
+
+      !!VRy68&y34=0/y37=0:S0;
+      !!VRy68&y34>0/y37=0:Sy34;
+      !!VRy68&y34=0/y37>0:Sy37+4;
+      !!VRy68&y34=1/y37>0:Sy37+14;
+      !!VRy68&y34=2/y37>0:Sy37+24;
+      !!VRy68&y34=3/y37>0:Sy37+34;
+      !!VRy68&y34=4/y37>0:Sy37+44;
+
+      !!VRy69&y44=0/y47=0:S0;
+      !!VRy69&y44>0/y47=0:Sy44;
+      !!VRy69&y44=0/y47>0:Sy47+4;
+      !!VRy69&y44=1/y47>0:Sy47+14;
+      !!VRy69&y44=2/y47>0:Sy47+24;
+      !!VRy69&y44=3/y47>0:Sy47+34;
+      !!VRy69&y44=4/y47>0:Sy47+44;
+
+      !!DL22:Ay65/4/y68;
+      !!DL22:Ay64/4/y69;
+
+      !!VRz1:S^%y31^;
+      !!VRy66:Sy30+2;
+      !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+      !!VRz2:S^%y41^;
+      !!VRy67:Sy40+2;
+      !!DL22:Ay62/4/y67/0 Ay63/3/z2/0 Av999/4/0/0;
+
+      !!DL22:Ay62/4/y66 Ay63/3/z1/0;
+      !!DL22:Ay60/4/y67 Ay61/3/z2/0;
+      !!FU(treb_hre_mainDlgClean):P;
+      !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+    !!en;
+  !!en;
+
+!!el&v999<=35;                                             [Garrison]
+  !!if&y8=0;
+    !!SN:W^treb_hre_row^/2;
+    !!VRy9:Sv999 -29;
+    !!SN:W^treb_hre_column^/y9;
+
+    !!SN:W^treb_hre_hero%y3_slot%y9_monReserveType^/?y30;
+    !!SN:W^treb_hre_hero%y3_slot%y9_monReserveQty^/?y31;
+
+    !!SN:W^treb_hre_hero%y3_monReserveTypeSelect^/y30;
+    !!SN:W^treb_hre_hero%y3_monReserveQtySelect^/y31;
+
+    !!DL22&y30>(NO_MON)/y31>0:Av999/4/1;
+    !!FU(treb_hre_mainDlgClean)&y30<=(NO_MON)/y31<=0:P;
+
+  !!el&y8=2;                                             [Garrison to Garrison]
+    !!VRy4:Sy9;
+    !!VRy5:Sv999 -29;
+
+    !!VRy60:Sy4+1;
+    !!VRy61:Sy4+15;
+
+    !!VRy62:Sy5+1;
+    !!VRy63:Sy5+15;
+
+    !!VRy64:Sy4+43;
+    !!VRy65:Sy5+43;
+
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/?y30;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/?y31;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/?y32;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/?y33;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/?y34;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/?y35;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/?y36;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/?y37;
+
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/?y50;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/?y51;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/?y52;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/?y53;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/?y54;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/?y55;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/?y56;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/?y57;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveLock^/?y58;
+
+    !!if&y58=0;
+      !!if&y4<>y5;
+        !!if&y50<=(NO_MON)/y51<=0;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y30;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y31;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y32;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y33;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y34;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y35;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y36;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y37;
+
+          !!VRy68&y34=0/y37=0:S0;
+          !!VRy68&y34>0/y37=0:Sy34;
+          !!VRy68&y34=0/y37>0:Sy37+4;
+          !!VRy68&y34=1/y37>0:Sy37+14;
+          !!VRy68&y34=2/y37>0:Sy37+24;
+          !!VRy68&y34=3/y37>0:Sy37+34;
+          !!VRy68&y34=4/y37>0:Sy37+44;
+
+          !!DL22:Ay65/4/y68; 
+
+          !!VRz1:S^%y31^;
+          !!VRy66:Sy30+2;
+          !!DL22:Ay62/4/y66 Ay63/3/z1 Av999/4/0/0;
+
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/(NO_MON);
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/0;
+
+          !!HEy3:C0/y4/(NO_MON)/0;
+          !!EXy3/y4:E0;
+          !!EXy3/y4:R0/0/0/0;
+
+          !!VRz2:S^^;
+          !!DL22:Ay60/4/0 Ay61/3/z2; 
+          !!DL22:Ay64/4/0;
+          !!FU(treb_hre_mainDlgClean):P;
+          !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+        !!el&y50=y30/y51>0/y31>0;
+          !!VRy70:Sy31+y51;
+          !!VRy72:Sy51*y52;
+          !!VRy73:Sy31*y32;
+          !!VRy73:+y72;
+          !!VRy72:Sy70;
+          !!VRy73&y72>0::y72;
+          !!VRy71:Sy34+y54;
+          !!VRy71&y71>4:S4;
+
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y30;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y70;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y73;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y33;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y71;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y35;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y36;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y37;
+
+          !!VRy68&y71=0/y37=0:S0;
+          !!VRy68&y71>0/y37=0:Sy71;
+          !!VRy68&y71=0/y37>0:Sy37+4;
+          !!VRy68&y71=1/y37>0:Sy37+14;
+          !!VRy68&y71=2/y37>0:Sy37+24;
+          !!VRy68&y71=3/y37>0:Sy37+34;
+          !!VRy68&y71=4/y37>0:Sy37+44;
+
+          !!DL22:Ay65/4/y68; 
+
+          !!VRz1:S^%y70^;
+          !!VRy66:Sy30+2;
+          !!DL22:Ay62/4/y66 Ay63/3/z1 Av999/4/0/0;
+
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/(NO_MON);
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/0;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/0;
+
+          !!HEy3:C0/y4/(NO_MON)/0;
+          !!EXy3/y4:E0;
+          !!EXy3/y4:R0/0/0/0;
+
+          !!VRz2:S^^;
+          !!DL22:Ay60/4/0 Ay61/3/z2; 
+          !!DL22:Ay64/4/0;
+          !!FU(treb_hre_mainDlgClean):P;
+          !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+        !!el&y50<>y30/y50>0/y30>0;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y30;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y31;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y32;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y33;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y34;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y35;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y36;
+          !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y37;
+
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveType^/y50;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveQty^/y51;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveExp^/y52;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOwn^/y53;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerNum^/y54;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerOpt^/y55;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveBannerType^/y56;
+          !!SN:W^treb_hre_hero%y3_slot%y4_monReserveRank^/y57;
+
+          !!VRy68&y34=0/y37=0:S0;
+          !!VRy68&y34>0/y37=0:Sy34;
+          !!VRy68&y34=0/y37>0:Sy37+4;
+          !!VRy68&y34=1/y37>0:Sy37+14;
+          !!VRy68&y34=2/y37>0:Sy37+24;
+          !!VRy68&y34=3/y37>0:Sy37+34;
+          !!VRy68&y34=4/y37>0:Sy37+44;
+
+          !!VRy69&y54=0/y57=0:S0;
+          !!VRy69&y54>0/y57=0:Sy54;
+          !!VRy69&y54=0/y57>0:Sy57+4;
+          !!VRy69&y54=1/y57>0:Sy57+14;
+          !!VRy69&y54=2/y57>0:Sy57+24;
+          !!VRy69&y54=3/y57>0:Sy57+34;
+          !!VRy69&y54=4/y57>0:Sy57+44;
+
+          !!DL22:Ay65/4/y68; 
+          !!DL22:Ay64/4/y69; 
+
+          !!VRz1:S^%y31^;
+          !!VRy66:Sy30+2;
+          !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+          !!VRz2:S^%y51^;
+          !!VRy67:Sy50+2;
+          !!DL22:Ay62/4/y67/0 Ay63/3/z2/0 Av999/4/0/0;
+
+          !!DL22:Ay62/4/y66 Ay63/3/z1/0;
+          !!DL22:Ay60/4/y67 Ay61/3/z2/0;
+          !!FU(treb_hre_mainDlgClean):P;
+          !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!en;
+    !!en;
+  !!en;
+
+  !!el&y8=1;                                             [Hero to Garrison]
+    !!VRy4:Sy9;
+    !!VRy5:Sv999 -29;
+
+    !!VRy60:Sy4+8; y40
+    !!VRy61:Sy4+22;  y41
+
+    !!VRy62:Sy5+1; y42
+    !!VRy63:Sy5+15; y43
+
+    !!VRy64:Sy4+50; y46
+    !!VRy65:Sy5+43; y47
+
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/?y20;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/?y21;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/?y22;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/?y23;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/?y24;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/?y25;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/?y26;
+    !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/?y27;
+
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/?y50;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/?y51;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/?y52;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/?y53;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/?y54;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/?y55;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/?y56;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/?y57;
+    !!SN:W^treb_hre_hero%y3_slot%y5_monReserveLock^/?y58;
+
+    !!if&y58=0;
+      !!if&y50<=(NO_MON)/y51<=0;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y21;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y22;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y24;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y27;
+
+        !!VRy68&y24=0/y27=0:S0;
+        !!VRy68&y24>0/y27=0:Sy24;
+        !!VRy68&y24=0/y27>0:Sy27+4;
+        !!VRy68&y24=1/y27>0:Sy27+14;
+        !!VRy68&y24=2/y27>0:Sy27+24;
+        !!VRy68&y24=3/y27>0:Sy27+34;
+        !!VRy68&y24=4/y27>0:Sy27+44;
+
+        !!DL22:Ay65/4/y68; 
+
+        !!VRz1:S^%y21^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66 Ay63/3/z1 Av999/4/1/0;
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/(NO_MON);
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/0;
+
+        !!HEy3:C0/y4/(NO_MON)/0;
+        !!EXy3/y4:E0;
+        !!EXy3/y4:R0/0/0/0;
+
+        !!VRz2:S^^;
+        !!DL22:Ay60/4/0 Ay61/3/z2; 
+        !!DL22:Ay64/4/0;
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!el&y50=y20/y50>0/y20>0;
+        !!VRy70:Sy21+y51;
+        !!VRy72:Sy51*y52;
+        !!VRy73:Sy21*y22;
+        !!VRy73:+y72;
+        !!VRy72:Sy70;
+        !!VRy73&y72>0::y72;
+        !!VRy71:Sy24+y54;
+        !!VRy71&y71>4:S4;
+
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y70;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y73;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y71;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y27;
+
+        !!VRy68&y71=0/y27=0:S0;
+        !!VRy68&y71>0/y27=0:Sy71;
+        !!VRy68&y71=0/y27>0:Sy27+4;
+        !!VRy68&y71=1/y27>0:Sy27+14;
+        !!VRy68&y71=2/y27>0:Sy27+24;
+        !!VRy68&y71=3/y27>0:Sy27+34;
+        !!VRy68&y71=4/y27>0:Sy27+44;
+
+        !!DL22:Ay65/4/y68;
+
+        !!VRz1:S^%y70^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66 Ay63/3/z1 Av999/4/1/0;
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/(NO_MON);
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/0;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/0;
+
+        !!HEy3:C0/y4/(NO_MON)/0;
+        !!EXy3/y4:E0;
+        !!EXy3/y4:R0/0/0/0;
+
+        !!VRz2:S^^;
+        !!DL22:Ay60/4/0 Ay61/3/z2;
+        !!DL22:Ay64/4/0; 
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!el&y50<>y20/y50>0/y20>0;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveType^/y20;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveQty^/y21;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveExp^/y22;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOwn^/y23;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerNum^/y24;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerOpt^/y25;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveBannerType^/y26;
+        !!SN:W^treb_hre_hero%y3_slot%y5_monReserveRank^/y27;
+
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroType^/y50;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroQty^/y51;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroExp^/y52;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOwn^/y53;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerNum^/y54;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerOpt^/y55;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroBannerType^/y56;
+        !!SN:W^treb_hre_hero%y3_slot%y4_monHeroRank^/y57;
+
+        !!VRy68&y24=0/y27=0:S0;
+        !!VRy68&y24>0/y27=0:Sy24;
+        !!VRy68&y24=0/y27>0:Sy27+4;
+        !!VRy68&y24=1/y27>0:Sy27+14;
+        !!VRy68&y24=2/y27>0:Sy27+24;
+        !!VRy68&y24=3/y27>0:Sy27+34;
+        !!VRy68&y24=4/y27>0:Sy27+44;
+
+        !!VRy69&y54=0/y57=0:S0;
+        !!VRy69&y54>0/y57=0:Sy54;
+        !!VRy69&y54=0/y57>0:Sy57+4;
+        !!VRy69&y54=1/y57>0:Sy57+14;
+        !!VRy69&y54=2/y57>0:Sy57+24;
+        !!VRy69&y54=3/y57>0:Sy57+34;
+        !!VRy69&y54=4/y57>0:Sy57+44;
+
+        !!DL22:Ay65/4/y68;
+        !!DL22:Ay64/4/y69;
+
+        !!VRz1:S^%y21^;
+        !!VRy66:Sy20+2;
+        !!DL22:Ay62/4/y66/0 Ay63/3/z1/0 Av999/4/0/0;
+
+        !!VRz2:S^%y51^;
+        !!VRy67:Sy50+2;
+        !!DL22:Ay62/4/y67/0 Ay63/3/z2/0 Av999/4/0/0;
+
+        !!DL22:Ay62/4/y66 Ay63/3/z1/0;
+        !!DL22:Ay60/4/y67 Ay61/3/z2/0;
+        !!FU(treb_hre_mainDlgClean):P;
+        !!DO(treb_hre_mainDlgHint)/0/6/1:P;
+
+      !!en;
+    !!en;
+  !!en;
+!!en;
+
+; ============= SPLIT STACK ========================================================================
+
+!?DL&v998=22/v999=100/v1000=13;
+!!SN:W^treb_hre_heroActive^/?y3;
+
+!!IF:M^{Hero Reserve Extended}
+
+Sorry, split army is still in development and cannot be used currently.^;
+!!FU:E;
+
+!!SN:W^treb_hre_hero%y3_monHeroTypeSelect^/?y20;
+!!SN:W^treb_hre_hero%y3_monHeroQtySelect^/?y21;
+!!VRy22&y21>1:Sy21-1;
+
+!!if&y20>(NO_MON)/y21>1;
+  !!FU(treb_hre_splitStack):P^{Split Stack}^/^Enter value between 1-%y22^/?(answer:y)/?(value:y);
+  !!if&(answer)<>-1;
+    !!if&(value)>=1/(value)<=y22;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monHeroTypeChosen^/y20;
+      !!SN:W^treb_hre_hero%y3_monHeroQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!el&(value)<1;
+      !!VR(value):S1;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monHeroTypeChosen^/y20;
+      !!SN:W^treb_hre_hero%y3_monHeroQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!el&(value)>y22;
+      !!VR(value):Sy22;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monHeroTypeChosen^/y20;
+      !!SN:W^treb_hre_hero%y3_monHeroQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!en;
+  !!en;
+!!en;
+
+!!SN:W^treb_hre_hero%y3_monReserveTypeSelect^/?y30;
+!!SN:W^treb_hre_hero%y3_monReserveQtySelect^/?y31;
+!!VRy32&y31>1:Sy31-1;
+
+!!if&y30>(NO_MON)/y31>1;
+  !!FU(treb_hre_splitStack):P^{Split Stack}^/^Enter value between 1-%y32^/?(answer)/?(value);
+  !!if&(answer)<>-1;
+    !!if&(value)>=1/(value)<=y32;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monReserveTypeChosen^/y30;
+      !!SN:W^treb_hre_hero%y3_monReserveQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!el&(value)<1;
+      !!VR(value):S1;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monReserveTypeChosen^/y30;
+      !!SN:W^treb_hre_hero%y3_monReserveQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!el&(value)>y32;
+      !!VR(value):Sy32;
+      !!IF:M^%(value)^;
+      !!SN:W^treb_hre_hero%y3_monReserveTypeChosen^/y30;
+      !!SN:W^treb_hre_hero%y3_monReserveQtyChosen^/(value);
+      !!SN:W^treb_hre_hero%y3_didSplit^/1;
+    !!en;
+  !!en;
+!!en;
+
+!?FU(treb_hre_splitStack);
+!#VA(title:x) (text:x) (answer:x) (value:x); 
+!!VRz2:Sz(text);
+!!VRz1:Sz(title);
+!!IF:D4/1/2/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^/^^; [Set up input box]
+!!IF:F4/^^/^^/^^/^^/(TRUE);
+!!IF:E3/4;
+!!VR(answer):Sv3;
+!!VR(value):Vz1;                     [convert string to integer]
+
+; ============= BATTLE =============================================================================
+
+!?BF;                [Battle - Start]
+!!BA:H0/?(attackHero:y); 
+!!BA:H1/?(defendHero:y); 
+
+!!SN:W^treb_hre_heroBattleAttacker^/(attackHero);
+!!SN:W^treb_hre_heroBattleDefender^/(defendHero);
+
+!?BG0;                [Battle - If Retreat or Surrender]
+!!BG:A?(battleAction:y) Q?(attackingSide:y);
+!!SN:W^treb_hre_heroBattleAttacker^/?(attackHero:y);
+!!SN:W^treb_hre_heroBattleDefender^/?(defendHero:y);
+
+!!SN&(battleAction)=(BATTLE_ACTION_RETREAT)/(attackHero)>(NO_HERO)/(attackingSide)=0:W^treb_hre_hero%(attackHero)_hasRetreated^/1;
+!!SN&(battleAction)=(BATTLE_ACTION_RETREAT)/(defendHero)>(NO_HERO)/(attackingSide)=1:W^treb_hre_hero%(defendHero)_hasRetreated^/1;
+
+!!if&(battleAction)=(BATTLE_ACTION_SURRENDER);
+  !!if&(attackHero)>(NO_HERO)/(attackingSide)=0;
+    !!HE(attackHero):O?(attackHeroOwner:y);
+
+    !!SN:W^treb_hre_hero%(attackHero)_slot0_monReserveType^/?y40;
+    !!SN:W^treb_hre_hero%(attackHero)_slot1_monReserveType^/?y41;
+    !!SN:W^treb_hre_hero%(attackHero)_slot2_monReserveType^/?y42;
+    !!SN:W^treb_hre_hero%(attackHero)_slot3_monReserveType^/?y43;
+    !!SN:W^treb_hre_hero%(attackHero)_slot4_monReserveType^/?y44;
+    !!SN:W^treb_hre_hero%(attackHero)_slot5_monReserveType^/?y45;
+    !!SN:W^treb_hre_hero%(attackHero)_slot6_monReserveType^/?y46;
+
+    !!SN:W^treb_hre_hero%(attackHero)_slot0_monReserveQty^/?y50;
+    !!SN:W^treb_hre_hero%(attackHero)_slot1_monReserveQty^/?y51;
+    !!SN:W^treb_hre_hero%(attackHero)_slot2_monReserveQty^/?y52;
+    !!SN:W^treb_hre_hero%(attackHero)_slot3_monReserveQty^/?y53;
+    !!SN:W^treb_hre_hero%(attackHero)_slot4_monReserveQty^/?y54;
+    !!SN:W^treb_hre_hero%(attackHero)_slot5_monReserveQty^/?y55;
+    !!SN:W^treb_hre_hero%(attackHero)_slot6_monReserveQty^/?y56;
+
+    !!FU(WOG_Creature_GetCost)&y40>(NO_MON):Py40/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y60;
+    !!FU(WOG_Creature_GetCost)&y41>(NO_MON):Py41/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y61;
+    !!FU(WOG_Creature_GetCost)&y42>(NO_MON):Py42/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y62;
+    !!FU(WOG_Creature_GetCost)&y43>(NO_MON):Py43/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y63;
+    !!FU(WOG_Creature_GetCost)&y44>(NO_MON):Py44/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y64;
+    !!FU(WOG_Creature_GetCost)&y45>(NO_MON):Py45/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y65;
+    !!FU(WOG_Creature_GetCost)&y46>(NO_MON):Py46/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y66;
+
+    !!VRy70:Sy50*y60*45:100;
+    !!VRy71:Sy51*y61*45:100;
+    !!VRy72:Sy52*y62*45:100;
+    !!VRy73:Sy53*y63*45:100;
+    !!VRy74:Sy54*y64*45:100;
+    !!VRy75:Sy55*y65*45:100;
+    !!VRy76:Sy56*y66*45:100;
+
+    !!VRy80:Sy70+y71+y72+y73+y74+y75+y76;
+
+    !!if&(defendHero)>(NO_HERO);
+      !!HE(defendHero):B0/?z1;
+    !!en;
+
+    !!if&y80>0;
+      !!IF&i^timerIsHuman^:Q1/^%z1 states:
+
+"In addition, you will have to pay me %y80 gold if you would like to keep your reserve troops."^;
+
+      !!if&1;
+        !!FU(WOG_Player_CheckEnoughResources):P?(boolHasResources:y)/(attackHeroOwner)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/y80;
+        !!if&(boolHasResources)<>(TRUE);
+          !!IF&i^timerIsHuman^:M^You don't have enough gold!^;
+          !!SN&(attackHero)>(NO_HERO):W^treb_hre_hero%(attackHero)_hasRetreated^/1;
+        !!el;
+          !!FU(WOG_Player_RemoveResources):P(attackHeroOwner)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/y80;
+          !!SN&(attackHero)>(NO_HERO):W^treb_hre_hero%(attackHero)_hasSurrendered^/1;
+        !!en;
+      !!el&-1;
+        !!SN&(attackHero)>(NO_HERO):W^treb_hre_hero%(attackHero)_hasRetreated^/1;
+      !!en;
+    !!en;
+
+  !!en;
+
+  !!if&(defendHero)>(NO_HERO)/(attackingSide)=1;
+    !!HE(defendHero):O?(defendHeroOwner:y);
+
+    !!SN:W^treb_hre_hero%(defendHero)_slot0_monReserveType^/?y40;
+    !!SN:W^treb_hre_hero%(defendHero)_slot1_monReserveType^/?y41;
+    !!SN:W^treb_hre_hero%(defendHero)_slot2_monReserveType^/?y42;
+    !!SN:W^treb_hre_hero%(defendHero)_slot3_monReserveType^/?y43;
+    !!SN:W^treb_hre_hero%(defendHero)_slot4_monReserveType^/?y44;
+    !!SN:W^treb_hre_hero%(defendHero)_slot5_monReserveType^/?y45;
+    !!SN:W^treb_hre_hero%(defendHero)_slot6_monReserveType^/?y46;
+
+    !!SN:W^treb_hre_hero%(defendHero)_slot0_monReserveQty^/?y50;
+    !!SN:W^treb_hre_hero%(defendHero)_slot1_monReserveQty^/?y51;
+    !!SN:W^treb_hre_hero%(defendHero)_slot2_monReserveQty^/?y52;
+    !!SN:W^treb_hre_hero%(defendHero)_slot3_monReserveQty^/?y53;
+    !!SN:W^treb_hre_hero%(defendHero)_slot4_monReserveQty^/?y54;
+    !!SN:W^treb_hre_hero%(defendHero)_slot5_monReserveQty^/?y55;
+    !!SN:W^treb_hre_hero%(defendHero)_slot6_monReserveQty^/?y56;
+
+    !!FU(WOG_Creature_GetCost)&y40>(NO_MON):Py40/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y60;
+    !!FU(WOG_Creature_GetCost)&y41>(NO_MON):Py41/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y61;
+    !!FU(WOG_Creature_GetCost)&y42>(NO_MON):Py42/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y62;
+    !!FU(WOG_Creature_GetCost)&y43>(NO_MON):Py43/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y63;
+    !!FU(WOG_Creature_GetCost)&y44>(NO_MON):Py44/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y64;
+    !!FU(WOG_Creature_GetCost)&y45>(NO_MON):Py45/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y65;
+    !!FU(WOG_Creature_GetCost)&y46>(NO_MON):Py46/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/?y66;
+
+    !!VRy70:Sy50*y60*45:100;
+    !!VRy71:Sy51*y61*45:100;
+    !!VRy72:Sy52*y62*45:100;
+    !!VRy73:Sy53*y63*45:100;
+    !!VRy74:Sy54*y64*45:100;
+    !!VRy75:Sy55*y65*45:100;
+    !!VRy76:Sy56*y66*45:100;
+
+    !!VRy80:Sy70+y71+y72+y73+y74+y75+y76;
+
+    !!if&(attackHero)>(NO_HERO);
+      !!HE(attackHero):B0/?z1;
+    !!en;
+
+    !!if&y80>0;
+      !!IF&i^timerIsHuman^:Q1/^%z1 states:
+
+"In addition, you will have to pay me %y80 gold if you would like to keep your reserve troops."^;
+
+      !!if&1;
+        !!FU(WOG_Player_CheckEnoughResources):P?(boolHasResources:y)/(defendHeroOwner)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/y80;
+        !!if&(boolHasResources)<>(TRUE);
+          !!IF&i^timerIsHuman^:M^You don't have enough gold!^;
+          !!SN&(defendHero)>(NO_HERO):W^treb_hre_hero%(defendHero)_hasRetreated^/1;
+        !!el;
+          !!FU(WOG_Player_RemoveResources):P(defendHeroOwner)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/(NULL)/y80;
+          !!SN&(defendHero)>(NO_HERO):W^treb_hre_hero%(defendHero)_hasSurrendered^/1;
+        !!en;
+      !!el&-1;
+        !!SN&(defendHero)>(NO_HERO):W^treb_hre_hero%(defendHero)_hasRetreated^/1;
+      !!en;
+    !!en;
+
+  !!en;
+!!en;
+
+!?FU(OnBattleReplay);
+!!SN:W^treb_hre_heroBattleAttacker^/?(attackHero:y);
+!!SN:W^treb_hre_heroBattleDefender^/?(defendHero:y);
+!!SN:W^treb_hre_hero%(attackHero)_hasRetreated^/(FALSE);
+!!SN:W^treb_hre_hero%(attackHero)_hasSurrendered^/(FALSE);
+!!SN:W^treb_hre_hero%(defendHero)_hasRetreated^/(FALSE);
+!!SN:W^treb_hre_hero%(defendHero)_hasSurrendered^/(FALSE);
+
+!?FU(OnAfterBattle);                [Battle - End]
+!!SN:W^treb_hre_heroBattleAttacker^/?(attackHero:y);
+!!SN:W^treb_hre_heroBattleDefender^/?(defendHero:y);
+
+!!if&(attackHero)>(NO_HERO);
+  !!HE(attackHero):O?(attackHeroOwner:y);
+  !!SN:W^treb_hre_hero%(attackHero)_hasRetreated^/?y90;
+  !!SN:W^treb_hre_hero%(attackHero)_hasSurrendered^/?y91;
+  !!if&y90=1;
+    !!re i/0/6;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveRank^/0;
+    !!en;
+  !!el&(attackHeroOwner)<=(NO_OWNER)/y91<>1;
+    !!re i/0/6;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%(attackHero)_slot%i_monReserveRank^/0;
+    !!en;  
+  !!en;
+  !!SN:W^treb_hre_hero%(attackHero)_hasRetreated^/0;
+  !!SN:W^treb_hre_hero%(attackHero)_hasSurrendered^/0;
+!!en;
+
+!!if&(defendHero)>(NO_HERO);
+  !!HE(defendHero):O?(defendHeroOwner:y);
+  !!SN:W^treb_hre_hero%(defendHero)_hasRetreated^/?y92;
+  !!SN:W^treb_hre_hero%(defendHero)_hasSurrendered^/?y93;
+  !!if&y92=1;
+    !!re i/0/6;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveRank^/0;
+    !!en;
+  !!el&(defendHeroOwner)<=(NO_OWNER)/y93<>1;
+    !!re i/0/6;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveType^/(NO_MON);
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveQty^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveExp^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerOwn^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerNum^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerOpt^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveBannerType^/0;
+      !!SN:W^treb_hre_hero%(defendHero)_slot%i_monReserveRank^/0;
+    !!en;  
+  !!en;
+  !!SN:W^treb_hre_hero%(defendHero)_hasRetreated^/0;
+  !!SN:W^treb_hre_hero%(defendHero)_hasSurrendered^/0;
+!!en;
