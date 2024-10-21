@@ -1,6 +1,6 @@
 ﻿{
 	"caption": {
-		"en_US": "Hero Reserve Slots",
+		"en_US": "Hero Reserve Slots 1.0",
 		"ru_RU": "Резервные Слоты Героев",
 		"ua_UA": ""
 	},
@@ -22,7 +22,7 @@
 		"file": "Hero Reserve Slots.ico",
 		"index": 0
 	},
-	"mod_version": "v1.0",
+	"mod_version": "1.0",
 	"priority": 0,
 	"compatibility": {
 		"class": "default",
