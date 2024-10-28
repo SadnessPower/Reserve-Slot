@@ -6,7 +6,7 @@
 ## LATEST CHANGELOG
 2024-10-03 Fixes (1.0) by *SadnessPower*
 - Fixed Reserve Slot stacks disappering on Battle Replay 
-- Removed Split button
+- Removed not working Split button
 - Enter key could now be pressed to confirm the dialog
 
 -----------------------------------------------------------------------------------------------------------------------
